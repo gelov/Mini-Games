@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Who's the Impostor? · Offshorly Game Night</title>
+  <meta name="description" content="Everyone gets the same secret word, except the Impostor. Give clues, spot the suspicious player, and vote to catch them. An Offshorly Game Night multiplayer game.">
+  <meta name="theme-color" content="#13233a">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="impostor.css">
+  <script type="module" src="landing.js"></script>
+</head>
+<body>
+  <canvas class="skyline" aria-hidden="true"></canvas>
+
+  <header class="topbar">
+    <a class="brand" href="../">
+      <span class="brand__mug" data-icon="mug"></span>
+      <span class="brand__text">Offshorly <b>Game Night</b></span>
+    </a>
+    <img class="topbar__logo" src="../assets/offshorly-logo.svg" alt="Offshorly" width="442" height="76">
+    <a class="topbar__count" href="#join" data-focus-join>Join with code</a>
+  </header>
+
+  <main class="ng">
+    <section class="ng-hero" aria-labelledby="title">
+      <div class="ng-hero__copy">
+        <p class="eyebrow"><span class="chip chip--purple">Game 03</span> Social deduction game</p>
+        <h1 class="ng-title" id="title"><small>Who's the</small> <span><em>Impostor</em>?</span></h1>
+        <p class="ng-lede">Everyone in the room gets the same secret word… except the Impostor. Take turns giving one-word clues, watch for anyone who's bluffing, then <b>vote to catch them</b> before they talk their way out of it.</p>
+
+        <dl class="stats">
+          <div class="stat"><dt>Players</dt><dd>4–12</dd></div>
+          <div class="stat"><dt>Ideal group</dt><dd>6+</dd></div>
+          <div class="stat"><dt>Time to play</dt><dd>15 <small>mins</small></dd></div>
+          <div class="stat"><dt>Rounds</dt><dd>1–8</dd></div>
+        </dl>
+
+        <div class="ng-cta" id="join">
+          <button class="btn btn--primary btn--lg" type="button" data-create>Create game</button>
+          <form class="joiner" data-join-form novalidate>
+            <label for="join-code">Have a code?</label>
+            <input class="field field--code" id="join-code" name="code" placeholder="ABCD" maxlength="4" size="4" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
+            <button class="btn btn--teal" type="submit">Join</button>
+          </form>
+        </div>
+        <p class="error" data-join-error role="alert"></p>
+      </div>
+
+      <div class="ng-art" aria-hidden="true">
+        <div class="lineup-wrap">
+          <svg class="lineup" viewBox="0 0 640 480" preserveAspectRatio="xMidYMid meet" focusable="false">
+            <rect class="lineup__shadow" x="36" y="36" width="568" height="380" rx="26"/>
+            <rect class="lineup__panel" x="36" y="28" width="568" height="380" rx="26"/>
+            <g class="lineup__chart">
+              <line x1="56" y1="140" x2="584" y2="140"/>
+              <line x1="56" y1="230" x2="584" y2="230"/>
+              <line x1="56" y1="320" x2="584" y2="320"/>
+            </g>
+            <g class="lineup__labels">
+              <text x="598" y="134">6FT</text>
+              <text x="598" y="224">5FT</text>
+              <text x="598" y="314">4FT</text>
+            </g>
+            <polygon class="lineup__spotlight" points="388,46 308,392 468,392"/>
+            <g transform="translate(128 236)">
+              <g class="suspect suspect--1">
+                <rect x="-47.6" y="25.2" width="95.2" height="123.2" rx="30.8"/>
+                <circle class="suspect__head" cx="0" cy="-22.4" r="46.2"/>
+                <circle class="suspect__eye" cx="16.8" cy="-25.2" r="5.6"/>
+                <circle class="suspect__eye" cx="0" cy="-25.2" r="5.6"/>
+                <rect class="suspect__placard" x="-23.8" y="61.6" width="47.6" height="39.2" rx="7"/>
+                <text class="suspect__num" x="0" y="89">1</text>
+              </g>
+            </g>
+            <g transform="translate(258 241)">
+              <g class="suspect suspect--2">
+                <rect x="-44.8" y="22.4" width="89.6" height="120.4" rx="28"/>
+                <circle class="suspect__head" cx="0" cy="-25.2" r="43.4"/>
+                <circle class="suspect__eye" cx="15.4" cy="-28" r="5.3"/>
+                <circle class="suspect__eye" cx="1.4" cy="-28" r="5.3"/>
+                <rect class="suspect__placard" x="-22.4" y="58.8" width="44.8" height="37.8" rx="7"/>
+                <text class="suspect__num" x="0" y="86">2</text>
+              </g>
+            </g>
+            <g transform="translate(388 230)">
+              <g class="suspect suspect--3">
+              <rect x="-50.4" y="28" width="100.8" height="126" rx="33.6"/>
+              <circle class="suspect__head" cx="0" cy="-19.6" r="49"/>
+              <g class="suspect__shades">
+                <path class="suspect__hat" d="M-42 -58.8 a42 33.6 0 0 1 84 0 z"/>
+                <rect x="-39.2" y="-58.8" width="78.4" height="12.6" rx="6.3"/>
+                <rect x="-33.6" y="-39.2" width="29.4" height="16.8" rx="7"/>
+                <rect x="4.2" y="-39.2" width="29.4" height="16.8" rx="7"/>
+                <rect x="-4.2" y="-33.6" width="8.4" height="5.6"/>
+              </g>
+              <path class="suspect__smirk" d="M-16.8 16.8 q16.8 12.6 33.6 0"/>
+              <rect class="suspect__placard" x="-25.2" y="67.2" width="50.4" height="40.6" rx="7"/>
+              <text class="suspect__num" x="0" y="96">3</text>
+              </g>
+              <g transform="translate(0 -102)">
+                <g class="suspect__badge">
+                  <circle r="26.6"/>
+                  <text y="10">?</text>
+                </g>
+              </g>
+            </g>
+            <g transform="translate(518 241)">
+              <g class="suspect suspect--4">
+                <rect x="-42" y="25.2" width="84" height="117.6" rx="26.6"/>
+                <circle class="suspect__head" cx="0" cy="-22.4" r="40.6"/>
+                <circle class="suspect__eye" cx="-11.2" cy="-25.2" r="5"/>
+                <circle class="suspect__eye" cx="-25.2" cy="-25.2" r="5"/>
+                <rect class="suspect__placard" x="-21" y="56" width="42" height="36.4" rx="7"/>
+                <text class="suspect__num" x="0" y="82">4</text>
+              </g>
+            </g>
+          </svg>
+          <div class="bubble bubble--1"><small>Vote</small>#3, it's them</div>
+          <div class="bubble bubble--2"><small>Whisper</small>Total sus...</div>
+          <div class="bubble bubble--3 bubble--guess"><small>Vote</small>Locked in</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ng-section" aria-labelledby="how-title">
+      <header class="ng-section__head">
+        <p class="eyebrow">Four steps, every round</p>
+        <h2 class="section-title" id="how-title">How to play</h2>
+      </header>
+      <ol class="steps">
+        <li class="panel step"><span class="step__num">1</span><h3>Get your word</h3><p>Everyone secretly gets the same word… except one random player, the Impostor, who gets nothing.</p></li>
+        <li class="panel step"><span class="step__num">2</span><h3>Give a clue</h3><p>Taking turns, say one short clue related to the word. The Impostor has to bluff along.</p></li>
+        <li class="panel step"><span class="step__num">3</span><h3>Spot the impostor</h3><p>Listen for clues that feel vague or off. Someone doesn't actually know the word.</p></li>
+        <li class="panel step"><span class="step__num">4</span><h3>Vote &amp; reveal</h3><p>Vote for who you think is lying. Catch the Impostor before they steal the round back.</p></li>
+      </ol>
+    </section>
+
+    <section class="ng-section scorebook" aria-label="Scoring and rules">
+      <div class="panel">
+        <h3>Scoring</h3>
+        <ul class="score-rows">
+          <li class="score-row"><span class="chip chip--teal">Correct vote</span><p>Crew who vote for the real Impostor earn 1 point.</p></li>
+          <li class="score-row"><span class="chip chip--purple">Impostor escapes</span><p>If the vote doesn't land on the Impostor, they earn 2 points.</p></li>
+          <li class="score-row"><span class="chip chip--red">Impostor steals it back</span><p>Caught Impostors get one guess at the secret word. Right answer: still 2 points. Wrong: 0.</p></li>
+        </ul>
+        <div class="bust-meter">
+          <p>Caught the impostor but they guess the word correctly? They still walk away with 2 points.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Rules</h3>
+        <ol class="rules">
+          <li><span>Clues can't contain the secret word itself, the game blocks it.</span></li>
+          <li><span>Only the active player can give a clue, one at a time, in order.</span></li>
+          <li><span>You can't vote for yourself, and votes lock in once cast.</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="ng-section" aria-labelledby="preview-title">
+      <header class="ng-section__head">
+        <p class="eyebrow">Plays on any phone or laptop</p>
+        <h2 class="section-title" id="preview-title">Gameplay</h2>
+      </header>
+      <div class="panel preview">
+        <div class="preview__frame" aria-hidden="true">
+          <div class="game">
+            <div class="panel bar">
+              <span class="chip">Round 2 / 5</span>
+              <p class="bar__title"><small>Clue 3 of 6</small>Jordan is giving a clue…</p>
+              <span class="timer is-preview"><svg viewBox="0 0 74 74"><circle class="timer__track" cx="37" cy="37" r="30"/><circle class="timer__fill" cx="37" cy="37" r="30" stroke-dasharray="188.5" stroke-dashoffset="12"/></svg><b>0:22</b></span>
+            </div>
+            <div class="game__grid">
+              <div class="panel game__main">
+                <ul class="clue-log">
+                  <li><span class="avatar" style="--av:#9b7bff">M</span><b>Maya</b><span>Frosty</span></li>
+                  <li><span class="avatar" style="--av:#f7ab5c">L</span><b>Luna</b><span>Cold</span></li>
+                </ul>
+              </div>
+              <aside class="panel game__side">
+                <h3>Turn order</h3>
+                <ul class="roster">
+                  <li class="is-done"><span class="avatar" style="--av:#9b7bff">M</span><span class="roster__name">Maya</span><span class="roster__meta done">clued</span></li>
+                  <li class="is-done"><span class="avatar" style="--av:#f7ab5c">L</span><span class="roster__name">Luna</span><span class="roster__meta done">clued</span></li>
+                  <li><span class="avatar" style="--av:#5dd9b3">J</span><span class="roster__name">Jordan</span><span class="roster__meta">thinking…</span></li>
+                  <li><span class="avatar" style="--av:#ff6363">E</span><span class="roster__name">Elena</span><span class="roster__meta">waiting</span></li>
+                </ul>
+              </aside>
+            </div>
+          </div>
+        </div>
+        <p class="preview__caption">Everyone plays on their own device. The host shares a 4-letter room code and the game handles turns, votes, and scoring.</p>
+      </div>
+    </section>
+
+    <section class="panel ng-final" aria-label="Start a game">
+      <div class="wordcard wordcard--xs" aria-hidden="true"><div class="wordcard__band"><b>SECRET</b><span>word</span></div><div class="wordcard__body"><span class="wordcard__word">You?</span></div></div>
+      <div>
+        <h2>Gather your crew</h2>
+        <p>Create a room, share the code, and start once at least four players are in.</p>
+      </div>
+      <button class="btn btn--primary btn--lg" type="button" data-create>Create game</button>
+    </section>
+  </main>
+
+  <dialog class="dialog" data-create-dialog aria-labelledby="create-title">
+    <form class="panel" method="dialog" data-create-form novalidate>
+      <h2 id="create-title">Host a game</h2>
+      <div>
+        <label class="label" for="host-name">Your display name</label>
+        <input class="field" id="host-name" name="name" maxlength="20" autocomplete="nickname" required>
+      </div>
+      <p class="note">You'll get a room code to share and can set rounds, timers, and category in the lobby.</p>
+      <p class="error" data-create-error role="alert"></p>
+      <div class="dialog__actions">
+        <button class="btn" type="button" data-cancel>Cancel</button>
+        <button class="btn btn--primary" type="submit">Create room</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

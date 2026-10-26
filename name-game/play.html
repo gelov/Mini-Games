@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Play · The Name Game</title>
+  <meta name="theme-color" content="#13233a">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="name-game.css">
+  <script type="module" src="play.js"></script>
+</head>
+<body>
+  <canvas class="skyline" aria-hidden="true"></canvas>
+
+  <header class="topbar">
+    <a class="brand" href="../">
+      <span class="brand__mug" data-icon="mug"></span>
+      <span class="brand__text">Offshorly <b>Game Night</b></span>
+    </a>
+    <a href="./" aria-label="The Name Game home"><img class="topbar__logo" src="../assets/offshorly-logo.svg" alt="Offshorly" width="442" height="76"></a>
+    <button class="topbar__count" type="button" data-room-chip hidden>Room <span data-room-code></span></button>
+  </header>
+
+  <main id="app" aria-live="polite"></main>
+
+  <p class="status" data-status role="status" hidden></p>
+  <p class="status toast" data-toast role="alert" hidden></p>
+</body>
+</html>

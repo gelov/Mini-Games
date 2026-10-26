@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Brew Leap · Offshorly Game Night</title>
+  <meta name="description" content="Brew Leap: hold to brew your power, release to leap the gap. An Offshorly Game Night original.">
+  <meta name="theme-color" content="#c6eaf5">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to the Game Night menu">
+      <span class="brand__mug" data-icon="mug"></span>
+      <span class="brand__text">Offshorly <b>Game Night</b></span>
+    </a>
+    <nav class="topbar__nav" aria-label="Sections">
+      <a href="#how">How to play</a>
+      <a href="#guide">Field guide</a>
+    </nav>
+    <div class="hud-chip" aria-hidden="true">
+      <span class="hud-chip__hearts"><i data-icon="heart"></i><i data-icon="heart"></i><i data-icon="heart"></i></span>
+      <span class="hud-chip__beans"><i data-icon="bean"></i><span data-best-chip>Best 00</span></span>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO: the live scene is the actual game, self-playing -->
+    <section class="hero" id="top">
+      <canvas class="hero__scene" aria-hidden="true"></canvas>
+      <div class="hero__content">
+        <p class="kicker"><i data-icon="bean"></i> An Offshorly Game Night original <i data-icon="bean"></i></p>
+        <h1 class="title" aria-label="Brew Leap">
+          <span class="title__mug" data-icon="mug" aria-hidden="true"></span>
+          <span class="title__word" data-split>Brew</span>
+          <span class="title__word title__word--accent" data-split>Leap</span>
+        </h1>
+        <p class="tagline">Hold to brew your power. Let go to leap. Reach the next cliff without spilling a drop.</p>
+        <div class="pill-row">
+          <a class="pill" href="#how">How to play</a>
+          <button class="pill pill--primary" type="button" data-play>Play now</button>
+          <a class="pill" href="#guide">Field guide</a>
+        </div>
+      </div>
+      <a class="scroll-cue" href="#how" aria-label="Scroll to how to play"><span></span></a>
+    </section>
+
+    <!-- HOW TO PLAY: the cliff face -->
+    <section class="how" id="how" aria-labelledby="how-title">
+      <div class="how__inner">
+        <header class="section-head">
+          <p class="eyebrow">Three moves. That's the whole job.</p>
+          <h2 id="how-title" class="section-title">How to play</h2>
+        </header>
+
+        <ol class="steps">
+          <li class="card step reveal">
+            <span class="step__num">1</span>
+            <div class="step__art" data-mini="charge"></div>
+            <h3>Hold to brew</h3>
+            <p>Press and hold anywhere, or hold <kbd>Space</kbd>. The meter fills, then drains again. Holding longer doesn't always mean jumping further.</p>
+          </li>
+          <li class="card step reveal">
+            <span class="step__num">2</span>
+            <div class="step__art" data-mini="leap"></div>
+            <h3>Release to leap</h3>
+            <p>Let go and your barista launches. More power means a longer, higher arc. Grab coffee beans on the way across.</p>
+          </li>
+          <li class="card step reveal">
+            <span class="step__num">3</span>
+            <div class="step__art" data-mini="land"></div>
+            <h3>Stick the landing</h3>
+            <p>Land on the next cliff to score it. Come up short and you'll spill. Each spill costs a heart.</p>
+          </li>
+        </ol>
+
+        <div class="trainer card reveal" data-trainer>
+          <div class="trainer__copy">
+            <p class="eyebrow">Warm-up gap</p>
+            <h3 class="trainer__title">Try the timing</h3>
+            <p>Hold the button, watch the meter, then let go. Aim for the bright patch.</p>
+            <button class="pill pill--primary pill--sm" type="button" data-trainer-btn>Hold to brew</button>
+            <p class="trainer__verdict" data-trainer-verdict aria-live="polite">&nbsp;</p>
+          </div>
+          <div class="trainer__stage" data-trainer-stage>
+            <div class="mini-cliff mini-cliff--from"></div>
+            <div class="mini-cliff mini-cliff--to"><span class="mini-cliff__patch"></span></div>
+            <img class="trainer__barista" alt="" data-sprite="barista">
+            <div class="trainer__meter" aria-hidden="true"><span data-trainer-fill></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FIELD GUIDE: signposts -->
+    <section class="guide" id="guide" aria-labelledby="guide-title">
+      <div class="guide__inner">
+        <header class="section-head section-head--center">
+          <p class="eyebrow">Read the signs</p>
+          <h2 id="guide-title" class="section-title">Field guide</h2>
+          <p class="guide__note"><b>Fair warning:</b> the further you go, the wider the gaps and the narrower the cliffs.</p>
+        </header>
+        <div class="signs">
+          <article class="sign reveal">
+            <div class="sign__board">
+              <span class="sign__icon sign__icon--hearts"><i data-icon="heart"></i><i data-icon="heart"></i><i data-icon="heart"></i></span>
+              <h3>Three hearts</h3>
+              <p>Every run starts with three. Fall into a gap and you lose one.</p>
+            </div>
+            <span class="sign__post"></span>
+          </article>
+          <article class="sign reveal">
+            <div class="sign__board">
+              <span class="sign__icon"><i data-icon="bean"></i></span>
+              <h3>Coffee beans</h3>
+              <p>Some gaps have beans floating over them. Grab them mid-air to fill your stash.</p>
+            </div>
+            <span class="sign__post"></span>
+          </article>
+          <article class="sign reveal">
+            <div class="sign__board">
+              <span class="sign__icon sign__icon--patch"><span></span></span>
+              <h3>Perfect patch</h3>
+              <p>Touch down on the bright patch in the middle of a cliff for a bonus bean.</p>
+            </div>
+            <span class="sign__post"></span>
+          </article>
+          <article class="sign sign--goal reveal">
+            <div class="sign__board">
+              <span class="sign__icon sign__icon--goal">GOAL</span>
+              <h3>GOAL café</h3>
+              <p>Every fifth cliff is a café stop. Land there to refill one heart.</p>
+            </div>
+            <span class="sign__post"></span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="finale" aria-labelledby="finale-title">
+      <div class="finale__content">
+        <h2 id="finale-title" class="finale__title">Your next cup is one leap away.</h2>
+        <button class="pill pill--primary pill--xl" type="button" data-play>Play now</button>
+        <p class="finale__best" data-best hidden></p>
+      </div>
+      <div class="finale__ground" aria-hidden="true">
+        <div class="mini-cliff mini-cliff--big mini-cliff--left">
+          <img class="finale__barista" alt="" data-sprite="barista">
+        </div>
+        <div class="mini-cliff mini-cliff--big mini-cliff--right">
+          <span class="finale__goal">GOAL</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Brew Leap · made for Offshorly Game Night</p>
+    <p>Single player · Mouse, touch or <kbd>Space</kbd></p>
+  </footer>
+
+  <!-- GAME -->
+  <div class="play" id="play" role="dialog" aria-modal="true" aria-label="Brew Leap game" hidden>
+    <div class="play__stage" data-stage>
+      <canvas class="play__canvas"></canvas>
+
+      <div class="hud">
+        <div class="hud__group">
+          <div class="hud__hearts" data-hearts aria-label="Hearts"></div>
+        </div>
+        <div class="hud__score" aria-live="polite">
+          <span class="hud__label">Cliffs</span>
+          <span class="hud__value" data-cliffs>0</span>
+        </div>
+        <div class="hud__group hud__group--end">
+          <span class="hud__beans"><i data-icon="bean"></i><span data-beans>0</span></span>
+          <button class="icon-btn" type="button" data-action="pause" aria-label="Pause">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel" data-panel="start">
+        <div class="panel__card">
+          <p class="kicker kicker--dark"><i data-icon="bean"></i> Ready, barista? <i data-icon="bean"></i></p>
+          <h2 class="panel__title">Brew Leap</h2>
+          <p class="panel__text"><b>Hold</b> anywhere (or <kbd>Space</kbd>) to brew power.<br><b>Release</b> to leap the gap.</p>
+          <div class="pill-row">
+            <button class="pill" type="button" data-action="exit">Exit</button>
+            <button class="pill pill--primary" type="button" data-action="begin">Start</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" data-panel="pause" hidden>
+        <div class="panel__card">
+          <h2 class="panel__title">Paused</h2>
+          <div class="pill-row">
+            <button class="pill" type="button" data-action="restart">Restart</button>
+            <button class="pill pill--primary" type="button" data-action="resume">Resume</button>
+            <button class="pill" type="button" data-action="exit">Exit</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" data-panel="over" hidden>
+        <div class="panel__card">
+          <p class="kicker kicker--dark">Out of hearts</p>
+          <h2 class="panel__title">Spilled!</h2>
+          <dl class="stats">
+            <div><dt>Cliffs</dt><dd data-final-cliffs>0</dd></div>
+            <div><dt>Beans</dt><dd data-final-beans>0</dd></div>
+            <div><dt>Your best</dt><dd data-final-best>0</dd></div>
+          </dl>
+          <p class="panel__text panel__text--sm" data-final-note></p>
+          <div class="pill-row">
+            <button class="pill" type="button" data-action="exit">Exit</button>
+            <button class="pill pill--primary" type="button" data-action="restart">Play again</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="rotate-hint">Turn your phone sideways for a wider view</p>
+    </div>
+  </div>
+</body>
+</html>

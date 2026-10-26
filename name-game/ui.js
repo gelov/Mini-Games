@@ -1,0 +1,87 @@
+// Shared helpers for The Name Game pages: API calls, per-tab session, and small markup builders.
+
+const API = '/api/name-game';
+
+export class ApiError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.status = status;
+  }
+}
+
+export async function api(path, body) {
+  let res;
+  try {
+    res = await fetch(`${API}${path}`, body === undefined
+      ? { cache: 'no-store' }
+      : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  } catch {
+    throw new ApiError("Can't reach the game server. Check your connection.", 0);
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new ApiError(data.error || 'Something went wrong.', res.status);
+  return data;
+}
+
+// Per-tab identity: survives reloads (reconnect) and lets several tabs be different players.
+const key = (code) => `name-game:${code}`;
+export const session = {
+  get(code) {
+    try { return JSON.parse(sessionStorage.getItem(key(code))); } catch { return null; }
+  },
+  set(code, value) {
+    try { sessionStorage.setItem(key(code), JSON.stringify(value)); } catch { /* storage unavailable */ }
+  },
+  clear(code) {
+    try { sessionStorage.removeItem(key(code)); } catch { /* storage unavailable */ }
+  },
+};
+// remembers the last display name to prefill forms
+export const lastName = {
+  get() { try { return localStorage.getItem('name-game:name') || ''; } catch { return ''; } },
+  set(v) { try { localStorage.setItem('name-game:name', v); } catch { /* storage unavailable */ } },
+};
+
+export const normalizeCode = (raw) => String(raw || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+
+const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ESC[c]);
+
+export function nametag(name, size = '') {
+  return `<div class="nametag ${size ? `nametag--${size}` : ''}">
+    <div class="nametag__band"><b>HELLO</b><span>my name is</span></div>
+    <div class="nametag__body"><span class="nametag__name">${esc(name)}</span></div>
+  </div>`;
+}
+
+const AVATAR_COLORS = ['#f7ab5c', '#5dd9b3', '#9b7bff', '#ff6363', '#ffd166', '#6cc4ff', '#ff9ecd', '#a7e36b'];
+export function avatar(player, size = '') {
+  let h = 0;
+  for (const ch of player.id || player.name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const initial = (player.name || '?').trim().charAt(0).toUpperCase();
+  return `<span class="avatar ${size ? `avatar--${size}` : ''}" style="--av:${AVATAR_COLORS[h % AVATAR_COLORS.length]}" aria-hidden="true">${esc(initial)}</span>`;
+}
+
+const RING = 2 * Math.PI * 30;
+export function timer() {
+  return `<span class="timer" data-timer role="timer" aria-label="Time left">
+    <svg viewBox="0 0 74 74" aria-hidden="true"><circle class="timer__track" cx="37" cy="37" r="30"/><circle class="timer__fill" cx="37" cy="37" r="30" stroke-dasharray="${RING}" stroke-dashoffset="0"/></svg>
+    <b data-timer-text>0:00</b>
+  </span>`;
+}
+
+/** Update every [data-timer] ring from a server deadline. */
+export function paintTimers(deadline, totalSecs, serverOffset) {
+  const left = deadline ? Math.max(0, (deadline - (Date.now() + serverOffset)) / 1000) : 0;
+  const frac = totalSecs ? Math.min(1, left / totalSecs) : 0;
+  const s = Math.ceil(left);
+  const text = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  document.querySelectorAll('[data-timer]').forEach((el) => {
+    el.querySelector('[data-timer-text]').textContent = text;
+    el.querySelector('.timer__fill').setAttribute('stroke-dashoffset', String(RING * (1 - frac)));
+    el.classList.toggle('is-low', left <= 10);
+  });
+  document.querySelectorAll('[data-countdown]').forEach((el) => { el.textContent = text; });
+}
+
+export const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
