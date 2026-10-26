@@ -60,46 +60,39 @@ THUMBS['name-game'] = `
     <g fill="${INK}"><rect x="216" y="160" width="64" height="6" rx="3"/><rect x="216" y="171" width="44" height="6" rx="3" opacity=".7"/></g>
   </svg>`;
 
-// Who's the Impostor?: a row of suspects on the night sky, one wearing a disguise with a "?" above.
+// Who's the Impostor?: a police lineup wall with a height chart and a spotlight aimed at the
+// 3rd suspect (ponytail) - the impostor, who's tilted slightly, wearing suspicious sunglasses,
+// and sitting under a "?" badge.
 THUMBS['impostor'] = `
   <svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice">
     <rect width="320" height="200" fill="#1b3050"/>
-    <g fill="#fdf3d8"><circle cx="22" cy="26" r="1.6"/><circle cx="298" cy="22" r="1.8"/><circle cx="268" cy="168" r="1.4"/><circle cx="46" cy="162" r="1.5"/><circle cx="306" cy="110" r="1.3"/><circle cx="150" cy="18" r="1.4"/></g>
-    <g stroke="${INK}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
-      <!-- crew member 1: side-glancing left -->
-      <g transform="translate(58 128)">
-        <rect x="-26" y="10" width="52" height="56" rx="18" fill="#6cc4ff"/>
-        <circle cx="0" cy="-8" r="26" fill="#fdf3d8"/>
-        <circle cx="7" cy="-9" r="3" fill="${INK}" stroke="none"/>
-        <circle cx="-5" cy="-9" r="3" fill="${INK}" stroke="none"/>
-      </g>
-      <!-- crew member 2: side-glancing right toward suspect -->
-      <g transform="translate(130 134)">
-        <rect x="-24" y="8" width="48" height="52" rx="17" fill="#5dd9b3"/>
-        <circle cx="0" cy="-10" r="24" fill="#fdf3d8"/>
-        <circle cx="6" cy="-11" r="2.8" fill="${INK}" stroke="none"/>
-        <circle cx="12" cy="-10" r="2.8" fill="${INK}" stroke="none"/>
-      </g>
-      <!-- the impostor: sunglasses + hat, "?" mark above -->
-      <g transform="translate(208 118)">
-        <rect x="-30" y="14" width="60" height="62" rx="20" fill="#f7ab5c"/>
-        <circle cx="0" cy="-6" r="28" fill="#fdf3d8"/>
-        <path d="M-24 -20 a24 20 0 0 1 48 0 z" fill="${INK}"/>
-        <rect x="-22" y="-20" width="44" height="7" rx="3.5" fill="${INK}"/>
-        <rect x="-20" y="-10" width="16" height="9" rx="4" fill="${INK}"/>
-        <rect x="4" y="-10" width="16" height="9" rx="4" fill="${INK}"/>
-        <rect x="-4" y="-7" width="8" height="3" fill="${INK}"/>
-        <path d="M-10 10 q10 8 20 0" fill="none" stroke="${INK}" stroke-width="3"/>
-      </g>
-      <!-- crew member 3: side-glancing left toward suspect -->
-      <g transform="translate(272 132)">
-        <rect x="-22" y="10" width="44" height="50" rx="16" fill="#ff9ecd"/>
-        <circle cx="0" cy="-8" r="22" fill="#fdf3d8"/>
-        <circle cx="-7" cy="-9" r="2.6" fill="${INK}" stroke="none"/>
-        <circle cx="-1" cy="-8" r="2.6" fill="${INK}" stroke="none"/>
-      </g>
+    <rect x="0" y="168" width="320" height="32" fill="#16263f"/>
+    <g stroke="#fdf3d8" stroke-width="1.4" opacity=".15">
+      <line x1="0" y1="34" x2="320" y2="34"/>
+      <line x1="0" y1="58" x2="320" y2="58"/>
+      <line x1="0" y1="82" x2="320" y2="82"/>
+      <line x1="0" y1="106" x2="320" y2="106"/>
+      <line x1="0" y1="130" x2="320" y2="130"/>
+      <line x1="0" y1="154" x2="320" y2="154"/>
     </g>
-    <g transform="translate(208 52)" stroke="${INK}" stroke-width="3" stroke-linejoin="round">
+    <polygon points="208,-20 150,200 266,200" fill="#fdf3d8" opacity=".10"/>
+    <polygon points="208,-20 178,200 238,200" fill="#fdf3d8" opacity=".07"/>
+    <image href="assets/suspects/suspect-1.png" x="31.5" y="106" width="53" height="84"/>
+    <image href="assets/suspects/suspect-2.png" x="103.1" y="106" width="53.8" height="84"/>
+    <g transform="rotate(-4 208 148)">
+      <image href="assets/suspects/suspect-3.png" x="177.3" y="106" width="61.3" height="88"/>
+      <g stroke="${INK}" stroke-width="1.2" stroke-linejoin="round">
+        <rect x="196.5" y="136.3" width="12" height="9" rx="4" fill="${INK}"/>
+        <rect x="212.45" y="136.3" width="12" height="9" rx="4" fill="${INK}"/>
+        <rect x="208.5" y="139.8" width="3.95" height="2" fill="${INK}" stroke="none"/>
+        <circle cx="200" cy="139" r="1.1" fill="#fdf3d8" stroke="none"/>
+        <circle cx="215.95" cy="139" r="1.1" fill="#fdf3d8" stroke="none"/>
+      </g>
+      <path d="M226.3 138.3 q-1.5 4 0 8 q2 2.5 0 5" fill="none" stroke="${INK}" stroke-width="1.1" stroke-linecap="round"/>
+      <path d="M226.3 138.3 q-1.5 4 0 8 q2 2.5 0 5 q-2 -1 -1 -5 q-1.5 -4.5 1 -8 z" fill="#6cc4ff" stroke="none" opacity=".9"/>
+    </g>
+    <image href="assets/suspects/suspect-4.png" x="240.5" y="106" width="63" height="84"/>
+    <g transform="translate(208 42)" stroke="${INK}" stroke-width="3" stroke-linejoin="round">
       <circle cx="0" cy="0" r="17" fill="#fdf3d8"/>
       <text x="0" y="8" text-anchor="middle" font-family="Lilita One, Arial Rounded MT Bold, sans-serif" font-size="22" fill="#ff6363" stroke="none">?</text>
     </g>
