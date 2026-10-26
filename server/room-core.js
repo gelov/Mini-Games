@@ -135,7 +135,7 @@ export function createRoomApi({ RoomClass, minPlayers, maxPlayers, actions }) {
         const player = auth(room, url.searchParams.get('token'));
         res.writeHead(200, {
           'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-store',
+          'Cache-Control': 'no-cache',
           Connection: 'keep-alive',
           'X-Accel-Buffering': 'no',
         });

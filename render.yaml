@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: game-night
+    runtime: node
+    plan: free
+    buildCommand: "true"
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 22

@@ -9,7 +9,7 @@ import { createNameGameApi } from './server/name-game.js';
 import { createImpostorApi } from './server/impostor.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const PORT = Number(process.argv[2]) || 5173;
+const PORT = Number(process.argv[2]) || Number(process.env.PORT) || 5173;
 const HOST = process.env.HOST || '0.0.0.0';
 
 const MIME = {
