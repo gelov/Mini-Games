@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test",
+    "dev:team-escape": "TEAM_ESCAPE_DEV=1 node server.js"
   },
   "engines": {
     "node": ">=20"

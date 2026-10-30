@@ -1,6 +1,7 @@
 /* Offshorly Game Night: main menu. Brew Leap's outlined art direction, set at night (dark mode). */
 
 @import url("shared/night.css");
+@import url("shared/sound-toggle.css");
 
 /* ---------- heading ---------- */
 
@@ -71,6 +72,18 @@
   border: var(--line) solid var(--edge);
   border-radius: 18px;
   box-shadow: 0 5px 0 var(--edge);
+}
+
+/* ---------- topbar sound toggle ----------
+   .sound-toggle / .sound-toggle--waiting / .topbar__end live in
+   shared/sound-toggle.css (imported above) so the impostor pages can reuse them. */
+
+/* very narrow phones: trim the brand pill so the logo + toggle keep fitting */
+@media (max-width: 460px) {
+  .topbar { gap: 10px; }
+  .brand { padding-right: 10px; }
+  .brand__text { display: none; }
+  .topbar__logo { height: 18px; }
 }
 
 /* ---------- game cards ---------- */
@@ -152,6 +165,10 @@ a.game:focus-visible { outline-offset: 6px; border-radius: 24px; }
 .game__desc { flex: 1; color: var(--text-soft); font-size: 0.98rem; line-height: 1.45; }
 .game__meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
 
+/* longer "Play Now" label: let it drop under the tag rather than widen its grid column */
+.game__meta--wrap { flex-wrap: wrap; }
+.games > li { min-width: 0; }
+
 .game--soon { background: var(--surface-muted); box-shadow: 0 8px 0 var(--edge); border-color: #2c4566; }
 .game--soon .game__num { color: var(--text-soft); background: var(--chip-muted); border-color: var(--edge); box-shadow: 0 4px 0 var(--edge); }
 .game--soon .game__title { color: var(--text-soft); }
@@ -182,7 +199,7 @@ a.game:focus-visible { outline-offset: 6px; border-radius: 24px; }
   border-radius: 999px;
   box-shadow: 0 5px 0 var(--edge);
 }
-.pill--primary { color: var(--on-accent); background: var(--sign); }
+.pill--primary { color: var(--on-accent); background: var(--sign); white-space: nowrap; }
 a.game:hover .pill--primary { background: #ffb96f; }
 .pill--locked { color: var(--text-soft); background: transparent; border-color: var(--text-soft); border-style: dashed; box-shadow: none; font-size: 1rem; }
 

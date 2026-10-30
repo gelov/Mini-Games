@@ -1,9 +1,24 @@
 import { SVG } from '../brew-leap/js/sprites.js';
 import { mountNightSky } from '../shared/night-sky.js';
+import { mountTrack } from '../shared/track.js';
+import { isMuted, mountToggle, setMusicController, refreshToggle, wireUiSounds } from '../shared/sfx.js';
 import { api, session, lastName, normalizeCode } from './ui.js';
+import { IMPOSTOR_MUSIC_VOLUME } from './music-config.js';
 
 document.querySelectorAll('[data-icon="mug"]').forEach((el) => { el.innerHTML = SVG.mug; });
 mountNightSky(document.querySelector('.skyline'), { pillars: false });
+
+// Background music: a looping jazz track (not the hub's chiptune). Registered
+// with sfx.js so the shared mute key/toggle UI drives it the same way the hub
+// drives its own music. Volume lives in ./music-config.js, shared with play.js.
+const impostorTrack = mountTrack('../assets/audio/impostor-jazz.mp3', { volume: IMPOSTOR_MUSIC_VOLUME, isMuted, onChange: refreshToggle });
+setMusicController({
+  start: () => impostorTrack.start(),
+  stop: (opts) => impostorTrack.stop(opts),
+  isWaiting: () => impostorTrack.isWaiting(),
+});
+mountToggle(document.querySelector('.sound-toggle'));
+wireUiSounds(document); // global hover/click sounds for every button/link on this page
 
 // ---------- create ----------
 

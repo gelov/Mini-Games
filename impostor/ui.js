@@ -71,7 +71,10 @@ export function timer() {
   </span>`;
 }
 
-/** Update every [data-timer] ring from a server deadline. */
+/** Update every [data-timer] ring from a server deadline. Safe to call when no
+ * ring is mounted (e.g. a player with nothing to do this phase, whose bar()
+ * omits the ring) - querySelectorAll just finds nothing and the forEach is a
+ * no-op, so this never throws. */
 export function paintTimers(deadline, totalSecs, serverOffset) {
   const left = deadline ? Math.max(0, (deadline - (Date.now() + serverOffset)) / 1000) : 0;
   const frac = totalSecs ? Math.min(1, left / totalSecs) : 0;
@@ -83,6 +86,13 @@ export function paintTimers(deadline, totalSecs, serverOffset) {
     el.classList.toggle('is-low', left <= 10);
   });
   document.querySelectorAll('[data-countdown]').forEach((el) => { el.textContent = text; });
+  // Compact per-row countdown in the clue turn-order roster, visible to everyone
+  // (not just the active player) so idle players can see the turn's time left
+  // without a full roster re-render every tick - only text/class are touched.
+  document.querySelectorAll('[data-row-timer]').forEach((el) => {
+    el.querySelector('[data-row-timer-text]').textContent = text;
+    el.classList.toggle('is-low', left <= 10);
+  });
 }
 
 export const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;

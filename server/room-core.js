@@ -48,6 +48,17 @@ export function createRoomApi({ RoomClass, minPlayers, maxPlayers, actions }) {
     res.write(`data: ${JSON.stringify(data)}\n\n`);
   }
 
+  // High-rate per-player state (e.g. Team Escape's 30Hz world snapshots), sent as a named SSE event so
+  // it never mixes with the room view. `build(playerId)` returns a pre-serialised string or an object.
+  function frame(room, build) {
+    const set = streams.get(room.code);
+    if (!set) return;
+    for (const s of set) {
+      const data = build(s.player.id);
+      if (data != null) s.res.write(`event: frame\ndata: ${typeof data === 'string' ? data : JSON.stringify(data)}\n\n`);
+    }
+  }
+
   function newCode() {
     for (let i = 0; i < 1000; i++) {
       let code = '';
@@ -77,6 +88,7 @@ export function createRoomApi({ RoomClass, minPlayers, maxPlayers, actions }) {
       const anyone = room.onlineIds().length > 0;
       if (!anyone && now - room.touched > ROOM_IDLE_MS) {
         clearTimeout(room.timer);
+        room.dispose?.();
         rooms.delete(code);
         streams.delete(code);
       }
@@ -112,7 +124,7 @@ export function createRoomApi({ RoomClass, minPlayers, maxPlayers, actions }) {
 
       if (parts.length === 1 && req.method === 'POST') {
         const body = await readJson(req);
-        const room = new RoomClass(newCode(), broadcast, { minPlayers, maxPlayers });
+        const room = new RoomClass(newCode(), broadcast, { minPlayers, maxPlayers, frame });
         rooms.set(room.code, room);
         const host = room.addPlayer(body.name);
         if (body.settings && room.updateSettings) room.updateSettings(host, body.settings);

@@ -31,7 +31,7 @@
   <main>
     <!-- HERO: the live scene is the actual game, self-playing -->
     <section class="hero" id="top">
-      <canvas class="hero__scene" aria-hidden="true"></canvas>
+      <canvas class="hero__scene" aria-hidden="true" data-no-sfx></canvas>
       <div class="hero__content">
         <p class="kicker"><i data-icon="bean"></i> An Offshorly Game Night original <i data-icon="bean"></i></p>
         <h1 class="title" aria-label="Brew Leap">
@@ -83,7 +83,7 @@
             <p class="eyebrow">Warm-up gap</p>
             <h3 class="trainer__title">Try the timing</h3>
             <p>Hold the button, watch the meter, then let go. Aim for the bright patch.</p>
-            <button class="pill pill--primary pill--sm" type="button" data-trainer-btn>Hold to brew</button>
+            <button class="pill pill--primary pill--sm" type="button" data-trainer-btn data-no-sfx>Hold to brew</button>
             <p class="trainer__verdict" data-trainer-verdict aria-live="polite">&nbsp;</p>
           </div>
           <div class="trainer__stage" data-trainer-stage>
@@ -167,7 +167,7 @@
   <!-- GAME -->
   <div class="play" id="play" role="dialog" aria-modal="true" aria-label="Brew Leap game" hidden>
     <div class="play__stage" data-stage>
-      <canvas class="play__canvas"></canvas>
+      <canvas class="play__canvas" data-no-sfx></canvas>
 
       <div class="hud">
         <div class="hud__group">

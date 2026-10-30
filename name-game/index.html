@@ -21,7 +21,10 @@
       <span class="brand__text">Offshorly <b>Game Night</b></span>
     </a>
     <img class="topbar__logo" src="../assets/offshorly-logo.svg" alt="Offshorly" width="442" height="76">
-    <a class="topbar__count" href="#join" data-focus-join>Join with code</a>
+    <div class="topbar__end">
+      <a class="topbar__count" href="#join" data-focus-join>Join with code</a>
+      <button class="sound-toggle" type="button" aria-pressed="false" aria-label="Mute sounds"></button>
+    </div>
   </header>
 
   <main class="ng">
@@ -55,9 +58,14 @@
         <div class="bubble bubble--2"><small>Clue</small>Goes to a school for magic and fights a dark lord</div>
         <div class="bubble bubble--3 bubble--guess"><small>Locked in</small>Harry Potter?</div>
       </div>
+
+      <a class="scroll-cue" href="#how-to-play" aria-label="Scroll to how to play">
+        <span class="scroll-cue__label">How to play</span>
+        <span class="scroll-cue__dot"></span>
+      </a>
     </section>
 
-    <section class="ng-section" aria-labelledby="how-title">
+    <section class="ng-section" id="how-to-play" aria-labelledby="how-title">
       <header class="ng-section__head">
         <p class="eyebrow">Four steps, every round</p>
         <h2 class="section-title" id="how-title">How to play</h2>

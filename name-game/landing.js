@@ -1,9 +1,43 @@
 import { SVG } from '../brew-leap/js/sprites.js';
 import { mountNightSky } from '../shared/night-sky.js';
+import { isMuted, mountToggle, setMusicController, wireUiSounds, getSharedCtx } from '../shared/sfx.js';
+import { startNameMusic, stopNameMusic, isNameMusicPlaying } from '../shared/namegame-music.js';
 import { api, session, lastName, normalizeCode } from './ui.js';
 
 document.querySelectorAll('[data-icon="mug"]').forEach((el) => { el.innerHTML = SVG.mug; });
 mountNightSky(document.querySelector('.skyline'), { pillars: false });
+
+// The Name Game's landing page plays the lobby theme (shared/namegame-music.js)
+// as a light game-show-y welcome; the in-room page (play.js) takes over with
+// its own composite lobby/ingame controller once a room is joined.
+let roomMuted = false;
+const lobbyController = {
+  start() {
+    roomMuted = false;
+    const ctx = getSharedCtx();
+    startNameMusic(ctx, { theme: 'lobby' });
+  },
+  stop(opts) {
+    roomMuted = true;
+    stopNameMusic(opts);
+  },
+  isWaiting() {
+    return false;
+  },
+};
+setMusicController(lobbyController);
+mountToggle(document.querySelector('.sound-toggle'));
+wireUiSounds(document); // global hover/click sounds for every button/link on this page
+
+// The synthesized score has no built-in pause-on-hidden behavior, so it's
+// paused/resumed here directly, mirroring the in-room page.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (isNameMusicPlaying()) stopNameMusic({ fast: true });
+  } else if (!roomMuted && !isMuted()) {
+    lobbyController.start();
+  }
+});
 
 // ---------- create ----------
 

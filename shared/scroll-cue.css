@@ -1,0 +1,55 @@
+/* Shared "scroll to how to play" cue: round cream chevron button + label,
+   matching Brew Leap's hero scroll-cue, adapted for the night-mode games. */
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+.scroll-cue {
+  grid-column: 1 / -1;
+  justify-self: center;
+  align-self: end;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin-top: clamp(24px, 3vh, 40px);
+  text-decoration: none;
+}
+.scroll-cue__label {
+  font-family: var(--display);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 246, 232, 0.65);
+}
+.scroll-cue__dot {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  border: var(--line) solid var(--edge);
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 5px 0 var(--edge);
+  animation: scroll-cue-bob 1.8s ease-in-out infinite;
+}
+.scroll-cue__dot::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 12px;
+  height: 12px;
+  border-right: 4px solid var(--edge);
+  border-bottom: 4px solid var(--edge);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+@keyframes scroll-cue-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+
+@media (max-width: 1180px) {
+  .scroll-cue { margin-top: clamp(16px, 4vh, 32px); }
+}

@@ -1,10 +1,84 @@
 // Who's the Impostor? client: renders the server's per-player view and sends actions. The server owns all rules.
 import { SVG } from '../brew-leap/js/sprites.js';
 import { mountNightSky } from '../shared/night-sky.js';
+import { mountTrack } from '../shared/track.js';
+import { isMuted, mountToggle, setMusicController, refreshToggle, wireUiSounds, getSharedCtx } from '../shared/sfx.js';
+import { startMystery, stopMystery, setIntensity, isMysteryPlaying, setDuck } from '../shared/mystery-music.js';
+import { syncTicks, stopTicks, configureTicks } from '../shared/timer-ticks.js';
+import { playBusted, playEscaped } from '../shared/stingers.js';
+import { playCelebration } from '../shared/celebration.js';
+import { fireConfetti } from '../shared/confetti.js';
 import { api, session, lastName, normalizeCode, esc, wordcard, avatar, timer, paintTimers, plural } from './ui.js';
+import { IMPOSTOR_MUSIC_VOLUME } from './music-config.js';
+
+// Tick phases + duck target for shared/timer-ticks.js, specific to this room.
+configureTicks({ tickPhases: { clue: true, vote: true, steal: true }, duck: setDuck });
 
 document.querySelectorAll('[data-icon="mug"]').forEach((el) => { el.innerHTML = SVG.mug; });
 mountNightSky(document.querySelector('.skyline'), { pillars: false });
+
+// Same jazz track as the landing page; restarts from the top on this navigation
+// (no cross-page playhead handoff yet - acceptable for now). Volume lives in
+// ./music-config.js, shared with landing.js.
+const impostorTrack = mountTrack('../assets/audio/impostor-jazz.mp3', { volume: IMPOSTOR_MUSIC_VOLUME, isMuted, onChange: refreshToggle });
+
+// Composite music controller: jazz plays in the lobby/final screens, a synthesized
+// mystery score (shared/mystery-music.js) plays during the live clue/vote/steal/
+// results phases, with a crossfade between the two when the phase group changes.
+// Routed to sfx.js via setMusicController so mute/unmute/visibility/bfcache all
+// keep working exactly as before, just against whichever source is "current".
+const JAZZ_PHASES = { lobby: true, final: true };
+const MYSTERY_PHASES = { clue: true, vote: true, steal: true, results: true };
+let currentSource = 'jazz'; // 'jazz' | 'mystery'
+let roomMuted = false;
+
+function startCurrent() {
+  if (roomMuted) return;
+  // Don't resume/start audio in a hidden tab (e.g. an SSE-driven phase change
+  // landing while backgrounded) - setPhase() above still records the current
+  // source so the visibilitychange handlers (this module's own for mystery,
+  // shared/track.js's own for jazz) start the right one once visible again.
+  if (document.hidden) return;
+  if (currentSource === 'jazz') {
+    impostorTrack.start();
+  } else {
+    const ctx = getSharedCtx();
+    startMystery(ctx, { intensity: 0 });
+  }
+}
+
+const musicController = {
+  start() {
+    roomMuted = false;
+    startCurrent();
+  },
+  stop(opts) {
+    roomMuted = true;
+    impostorTrack.stop(opts);
+    stopMystery(opts);
+  },
+  isWaiting() {
+    return currentSource === 'jazz' ? impostorTrack.isWaiting() : false;
+  },
+  setPhase(phase) {
+    const nextSource = JAZZ_PHASES[phase] ? 'jazz' : MYSTERY_PHASES[phase] ? 'mystery' : currentSource;
+    if (nextSource === 'mystery') {
+      setIntensity(phase === 'vote' || phase === 'steal' ? 1 : 0);
+    }
+    if (nextSource === currentSource) return;
+    const outgoing = currentSource;
+    currentSource = nextSource;
+    if (outgoing === 'jazz') {
+      impostorTrack.stop({ fast: true });
+    } else {
+      stopMystery({ fast: true });
+    }
+    startCurrent();
+  },
+};
+setMusicController(musicController);
+mountToggle(document.querySelector('.sound-toggle'));
+wireUiSounds(document); // global hover/click sounds; covers the SSE-rerendered lobby/play buttons too
 
 const app = document.getElementById('app');
 const code = normalizeCode(new URLSearchParams(location.search).get('room'));
@@ -20,7 +94,28 @@ const S = {
   clueDraftIndex: -1,
   selectedVote: null,
   stealDraft: '',
+  stingerRound: null, // last round number this tab has already played a result stinger for
+  lastPhase: null, // previous v.phase, used to detect "a new game just started"
+  celebrated: false, // whether this tab has already fired the final-screen celebration+confetti for the current game
+  celebrateTimerId: null, // pending setTimeout id for the celebration, cancelled if we leave 'final' first
 };
+
+// sfx.js's own visibilitychange handler early-returns for non-chiptune controllers
+// (it only knows how to pause/resume a plain controller via start()/stop(), and
+// shared/track.js's jazz <audio> element already pauses itself on hidden via its
+// own listener). The synthesized mystery score has no such built-in behavior, so
+// it must be paused/resumed here directly, same as jazz, or it keeps scheduling
+// oscillators (and ticks keep polling) in a hidden tab.
+document.addEventListener('visibilitychange', () => {
+  if (currentSource !== 'mystery') return;
+  if (document.hidden) {
+    if (isMysteryPlaying()) stopMystery({ fast: true });
+  } else if (!roomMuted && !isMuted()) {
+    const ctx = getSharedCtx();
+    const phase = S.view?.phase;
+    startMystery(ctx, { intensity: phase === 'vote' || phase === 'steal' ? 1 : 0 });
+  }
+});
 
 // ---------- chrome: room chip, status, toast ----------
 
@@ -178,21 +273,140 @@ function screenKey(v) {
   }
 }
 
+// Key for de-duping the round-result stinger: a reload mid-results/final (or a
+// late SSE reconnect) must not replay it, so the last-played round is
+// remembered both in memory (S.stingerRound) and in sessionStorage (survives
+// reloads, scoped per room+tab the same way session.js stores the player's
+// auth). `round` alone isn't globally unique though - it resets to 1 every new
+// game ("Play again" from final, or back-to-lobby then start again) - so this
+// key is explicitly cleared the moment a new game is detected starting (see
+// resetStingerDedup()/render() below), before any round number can collide
+// with a prior game's.
+const stingerStorageKey = `impostor:stinger:${code}`;
+// Same new-game-scoped dedup pattern as the stinger, for the final-screen
+// celebration (fanfare + confetti): fires once per game, survives reloads on
+// the final screen via sessionStorage, and is cleared alongside the stinger
+// dedup the moment a new game is detected (see enteringNewGame in render()).
+const celebrateStorageKey = `impostor:celebrate:${code}`;
+
+function resetStingerDedup() {
+  S.stingerRound = null;
+  try {
+    sessionStorage.removeItem(stingerStorageKey);
+  } catch {
+    // ignore - in-memory guard already cleared
+  }
+}
+
+function resetCelebrateDedup() {
+  S.celebrated = false;
+  if (S.celebrateTimerId) {
+    clearTimeout(S.celebrateTimerId);
+    S.celebrateTimerId = null;
+  }
+  try {
+    sessionStorage.removeItem(celebrateStorageKey);
+  } catch {
+    // ignore - in-memory guard already cleared
+  }
+}
+
+function maybeFireCelebration(v) {
+  if (v.phase !== 'final') {
+    if (S.celebrateTimerId) {
+      clearTimeout(S.celebrateTimerId);
+      S.celebrateTimerId = null;
+    }
+    return;
+  }
+  if (S.celebrated || S.celebrateTimerId) return;
+  let alreadyPlayed = false;
+  try {
+    alreadyPlayed = sessionStorage.getItem(celebrateStorageKey) === '1';
+  } catch {
+    // storage unavailable - fall back to the in-memory guard only
+  }
+  if (alreadyPlayed) {
+    S.celebrated = true;
+    return;
+  }
+  S.celebrateTimerId = setTimeout(() => {
+    S.celebrateTimerId = null;
+    S.celebrated = true;
+    try {
+      sessionStorage.setItem(celebrateStorageKey, '1');
+    } catch {
+      // ignore - in-memory guard still prevents a replay within this tab/session
+    }
+    if (!isMuted()) {
+      playCelebration(getSharedCtx());
+      const card = app.querySelector('.podium__step--1') || app.querySelector('.podium');
+      fireConfetti({ originRect: card?.getBoundingClientRect() ?? null });
+    }
+  }, 1500);
+}
+
+function maybeFireResultStinger(v) {
+  const res = v.results;
+  if (!res || typeof res.round !== 'number') return;
+  if (S.stingerRound === res.round) return;
+  let alreadyPlayed = false;
+  try {
+    alreadyPlayed = Number(sessionStorage.getItem(stingerStorageKey)) === res.round;
+  } catch {
+    // storage unavailable - fall back to the in-memory guard only
+  }
+  S.stingerRound = res.round;
+  if (alreadyPlayed) return;
+  try {
+    sessionStorage.setItem(stingerStorageKey, String(res.round));
+  } catch {
+    // ignore - in-memory guard still prevents a replay within this tab/session
+  }
+  if (isMuted()) return;
+  // An impostor win (never caught, or caught-then-stole-it-back) reads as
+  // ESCAPED; a loss (caught and the steal failed or never landed) reads as BUSTED.
+  const escaped = !res.caught || res.stealOk;
+  stopTicks(); // the stinger should cut any lingering tick sound, not overlap it
+  const ctx = getSharedCtx();
+  if (escaped) playEscaped(ctx); else playBusted(ctx);
+}
+
 function render() {
   const v = S.view;
   const key = screenKey(v);
   if (key !== S.key) {
     S.key = key;
+    // Detect "a new game just started" so the stinger dedup key (keyed only on
+    // round number) can't collide with the same round number from a prior game
+    // in this room: either freshly back in the lobby, or round 1 of a fresh
+    // clue phase arriving right after the previous game's final screen (the
+    // "Play again" button skips the lobby and goes straight from final to
+    // clue). S.lastPhase === null covers a tab that (re)loads directly into an
+    // already-running game's round 1.
+    const prevPhase = S.lastPhase;
+    S.lastPhase = v.phase;
+    const enteringNewGame = v.phase === 'lobby'
+      || (v.phase === 'clue' && v.round === 1 && (prevPhase === 'final' || prevPhase === null));
+    if (enteringNewGame) { resetStingerDedup(); resetCelebrateDedup(); }
     if (v.phase === 'clue' && v.clue.yourTurn) {
       if (S.clueDraftIndex !== v.clue.index) { S.clueDraft = ''; S.clueDraftIndex = v.clue.index; }
     }
     if (v.phase === 'vote') S.selectedVote = null;
     if (v.phase === 'steal') S.stealDraft = '';
+    // The server skips the 'results' phase entirely on the last round and goes
+    // straight to 'final' (see server/impostor.js finishRound), but still
+    // populates the same v.results field for it - so the final round's stinger
+    // must fire on first entry into 'final', not just on 'results'.
+    if (v.phase === 'results' || v.phase === 'final') maybeFireResultStinger(v);
+    maybeFireCelebration(v);
     app.innerHTML = ({ lobby, clue, vote, steal, results: resultsScreen, final: finalScreen })[v.phase](v);
     app.querySelector('[data-autofocus]')?.focus({ preventScroll: true });
   }
   patch(v);
   paintTimers(v.deadline, v.deadlineSecs, S.offset);
+  musicController.setPhase(v.phase);
+  syncTicks(v.phase, v.deadline, v.deadlineSecs, S.offset, hasOwnAction(v));
 }
 
 /** Live bits that change without replacing the screen (so typing and selections survive). */
@@ -240,18 +454,30 @@ function patchClue(v) {
   if (side) side.innerHTML = turnRoster(v);
 }
 
-function bar(v, small, title) {
+function bar(v, small, title, showTimer = true) {
   return `<div class="panel bar">
     <span class="chip">Round ${v.round} / ${v.settings.rounds}</span>
     <p class="bar__title"><small>${small}</small>${title}</p>
-    ${timer()}
+    ${showTimer ? timer() : ''}
   </div>`;
+}
+
+/** Whether THIS player has something to do right now (vs. just watching): drives
+ * whether they see the countdown ring/hear ticks, so idle players aren't confused
+ * by a timer for an action that isn't theirs. */
+function hasOwnAction(v) {
+  switch (v.phase) {
+    case 'clue': return Boolean(v.clue?.isParticipant && v.clue.yourTurn);
+    case 'vote': return Boolean(v.vote?.isParticipant && !v.vote.yourVote);
+    case 'steal': return Boolean(v.steal?.isImpostor);
+    default: return false;
+  }
 }
 
 function rosterItem(v, p, meta = '', extra = '') {
   const you = p.id === v.you;
   return `<li class="${p.online ? '' : 'is-offline'} ${you ? 'is-you' : ''} ${extra}">
-    ${avatar(p)}<span class="roster__name">${esc(p.name)}${you ? ' (you)' : ''}</span>${meta}
+    ${avatar(p)}<span class="roster__name" title="${esc(p.name)}">${esc(p.name)}${you ? ' (you)' : ''}</span>${meta}
   </li>`;
 }
 
@@ -322,8 +548,13 @@ function turnRoster(v) {
     let meta = '';
     let extra = '';
     if (doneIds.has(p.id)) { meta = '<span class="roster__meta done">clued</span>'; extra = 'is-done'; }
-    else if (p.id === c.activeId) { meta = '<span class="roster__meta">giving a clue…</span>'; extra = 'is-active'; }
-    else { meta = `<span class="roster__meta">${p.online ? 'waiting' : 'away'}</span>`; }
+    else if (p.id === c.activeId) {
+      // Live per-turn countdown, visible to everyone (not just the active player),
+      // so idle players can see at a glance how long the current turn has left.
+      // paintTimers() keeps the text/is-low state fresh every 250ms via [data-row-timer].
+      meta = '<span class="roster__meta roster__meta--timer" data-row-timer>⏱<b data-row-timer-text>0:00</b></span>';
+      extra = 'is-active';
+    } else { meta = `<span class="roster__meta">${p.online ? 'waiting' : 'away'}</span>`; }
     return rosterItem(v, p, meta, extra);
   }).join('');
 }
@@ -367,7 +598,7 @@ function clue(v) {
   }
 
   return `<div class="game">
-    ${bar(v, `Clue ${c.index + 1} of ${c.total}`, c.isParticipant && c.yourTurn ? 'Give a clue, one at a time' : "Who's got the real word?")}
+    ${bar(v, `Clue ${c.index + 1} of ${c.total}`, c.isParticipant && c.yourTurn ? 'Give a clue, one at a time' : "Who's got the real word?", hasOwnAction(v))}
     <div class="game__grid">
       <section class="panel game__main">${top}${cluesSoFar}${turnBlock}</section>
       <aside class="panel game__side"><h3>Turn order</h3><ul class="roster" data-slot="turnside"></ul></aside>
@@ -404,7 +635,7 @@ function vote(v) {
   }
 
   return `<div class="game">
-    ${bar(v, 'Vote', 'Who do you think is the Impostor?')}
+    ${bar(v, 'Vote', 'Who do you think is the Impostor?', hasOwnAction(v))}
     <div class="game__grid">
       <section class="panel game__main">${cluesList}${body}</section>
       <aside class="panel game__side"><h3>Waiting on…</h3><ul class="roster" data-slot="waiting"></ul></aside>
@@ -434,7 +665,7 @@ function steal(v) {
     </div>`;
   }
   return `<div class="game">
-    ${bar(v, 'Final chance', 'The Impostor is guessing the word…')}
+    ${bar(v, 'Final chance', 'The Impostor is guessing the word…', hasOwnAction(v))}
     <section class="panel game__main">${body}</section>
   </div>`;
 }
@@ -455,7 +686,7 @@ function ranked(v) {
 function leaderboard(v) {
   return ranked(v).map((p) => `<li class="${p.id === v.you ? 'is-you' : ''}">
       <span class="leader__rank">${p.rank}</span>${avatar(p)}
-      <span class="roster__name">${esc(p.name)}${p.id === v.you ? ' (you)' : ''}</span>
+      <span class="roster__name" title="${esc(p.name)}">${esc(p.name)}${p.id === v.you ? ' (you)' : ''}</span>
       <span class="roster__score">${p.score}</span>
     </li>`).join('');
 }

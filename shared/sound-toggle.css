@@ -1,0 +1,58 @@
+/* Shared speaker/mute toggle + the topbar__end wrapper that holds it. Used by the
+   hub (hub.css) and by any game page that has its own looping music track via
+   shared/track.js (e.g. impostor/impostor.css). Keep this in sync with whatever
+   page adds a `.sound-toggle` button to its topbar. */
+
+.topbar__end {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sound-toggle {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  color: var(--edge);
+  background: var(--surface);
+  border: var(--line) solid var(--edge);
+  border-radius: 50%;
+  box-shadow: 0 5px 0 var(--edge);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.sound-toggle:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--edge); }
+.sound-toggle:active,
+.sound-toggle[aria-pressed="true"] { transform: translateY(4px); box-shadow: 0 1px 0 var(--edge); }
+.sound-toggle:focus-visible { outline: 3px solid var(--sign); outline-offset: 3px; }
+
+/* Gentle hint that tapping this button will start sound: audio can't autoplay
+   without a user gesture in most browsers, so pulse the toggle until the audio
+   (chiptune or track) is actually running (and the user hasn't muted it). No
+   blocking overlay, just a subtle nudge. */
+.sound-toggle--waiting {
+  animation: sound-toggle-pulse 1.6s ease-in-out infinite;
+}
+@keyframes sound-toggle-pulse {
+  0%, 100% { transform: translateY(0) scale(1); box-shadow: 0 5px 0 var(--edge); }
+  50% { transform: translateY(-3px) scale(1.06); box-shadow: 0 8px 0 var(--edge); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sound-toggle--waiting {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  /* keep a third grid column so the toggle stays visible even once .topbar__count
+     (or any other end-slot text) is hidden at this width by shared/night.css. */
+  .topbar { grid-template-columns: auto 1fr auto; }
+  .topbar__end { gap: 0; }
+  .sound-toggle { width: 36px; height: 36px; }
+}
+@media (max-width: 460px) {
+  .sound-toggle { width: 32px; height: 32px; }
+}

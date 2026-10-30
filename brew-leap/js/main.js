@@ -1,7 +1,17 @@
 import { SVG, toDataUrl, sprite, COLORS as C, INK } from './sprites.js';
 import { Game, MAX_HEARTS, GRAVITY, PERFECT_HALF, launchVelocity, powerAt } from './game.js';
+import { setMusicController, wireUiSounds } from '../../shared/sfx.js';
 
 document.documentElement.classList.add('js');
+
+// Brew Leap has no background music of its own (no hub chiptune, no track) and no
+// speaker toggle in its topbar (its design system doesn't import shared/night.css,
+// so the shared toggle isn't a cheap drop-in here) - but menu/overlay buttons still
+// get the shared hover/click blips, gated on the same 'gamenight:muted' key used
+// everywhere else. A silent controller stands up the shared AudioContext for those
+// blips without starting any music.
+setMusicController({ start() {}, stop() {}, isWaiting: () => false });
+wireUiSounds(document); // menu + overlay buttons only; the canvas/hold-to-brew input is untouched (no matching selector)
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];

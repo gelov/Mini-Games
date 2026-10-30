@@ -20,7 +20,10 @@
       <span class="brand__text">Offshorly <b>Game Night</b></span>
     </a>
     <img class="topbar__logo" src="assets/offshorly-logo.svg" alt="Offshorly presents" width="442" height="76">
-    <p class="topbar__count"><span data-ready-count>1</span> ready · <span data-total-count>4</span> slots</p>
+    <div class="topbar__end">
+      <p class="topbar__count"><span data-ready-count>1</span> ready · <span data-total-count>4</span> slots</p>
+      <button class="sound-toggle" type="button" aria-pressed="false" aria-label="Mute sounds"></button>
+    </div>
   </header>
 
   <main class="menu">
@@ -81,18 +84,18 @@
         </li>
 
         <li>
-          <div class="game game--soon" aria-label="Game slot 4, coming soon">
+          <a class="game" href="team-escape/">
             <span class="game__num">04</span>
-            <span class="game__thumb game__thumb--soon" aria-hidden="true"><span class="soon-sign">?</span></span>
+            <span class="game__thumb game__thumb--night" data-thumb="team-escape" aria-hidden="true"></span>
             <span class="game__body">
-              <span class="game__title">Coming soon</span>
-              <span class="game__desc">Another game is brewing. Check back before game night.</span>
-              <span class="game__meta">
-                <span class="tag tag--muted">TBA</span>
-                <span class="pill pill--locked" aria-hidden="true">Locked</span>
+              <span class="game__title">Team Escape</span>
+              <span class="game__desc">Work together. Solve the puzzles. Escape before the other team.</span>
+              <span class="game__meta game__meta--wrap">
+                <span class="tag">2 teams · 10–20</span>
+                <span class="pill pill--primary">Play Now</span>
               </span>
             </span>
-          </div>
+          </a>
         </li>
       </ol>
     </section>

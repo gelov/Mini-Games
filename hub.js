@@ -1,6 +1,9 @@
 // Game Night menu. Reuses Brew Leap's sprite set so the hub and the game share one look.
 import { SVG, toDataUrl, COLORS as C, INK } from './brew-leap/js/sprites.js';
 import { mountNightSky } from './shared/night-sky.js';
+import { cardScene } from './team-escape/js/art.js';
+import { characterReady } from './team-escape/js/character.js';
+import { unlock, play, isMuted, canHover, mountToggle, stopBackgroundMusic, wireUiSounds } from './shared/sfx.js';
 
 // flat outlined purple gamepad, drawn in the same style as the game's icons (buttons animate via hub.css)
 const CONTROLLER = `
@@ -98,6 +101,13 @@ THUMBS['impostor'] = `
     </g>
   </svg>`;
 
+// Team Escape: Sprouts boosting each other up to the key, with the locked exit door
+THUMBS['team-escape'] = cardScene();
+characterReady.then(() => {
+  const el = document.querySelector('[data-thumb="team-escape"]');
+  if (el) el.innerHTML = cardScene();
+});
+
 document.querySelectorAll('[data-thumb]').forEach((el) => {
   el.innerHTML = THUMBS[el.dataset.thumb] ?? '';
 });
@@ -109,3 +119,30 @@ document.querySelector('[data-ready-count]').textContent = document.querySelecto
 // ---------- night sky backdrop (shared with the game pages) ----------
 
 mountNightSky(document.querySelector('.skyline'));
+
+// ---------- sound ----------
+
+if (canHover()) {
+  document.querySelectorAll('a.game').forEach((link) => {
+    link.addEventListener('pointerenter', () => play('hover'));
+  });
+}
+
+document.querySelectorAll('a.game').forEach((link) => {
+  link.addEventListener('click', (e) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (isMuted()) return;
+    unlock();
+    play('select');
+    stopBackgroundMusic({ fast: true });
+    e.preventDefault();
+    setTimeout(() => location.assign(link.href), 120);
+  });
+});
+
+mountToggle(document.querySelector('.sound-toggle'));
+
+// Global hover/click sounds for every other button on the hub. a.game cards keep
+// their own coin-chime + nav-delay handling above (excluded inside wireUiSounds),
+// and the sound-toggle keeps its own chirp (also excluded there).
+wireUiSounds(document);

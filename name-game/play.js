@@ -1,10 +1,79 @@
 // The Name Game client: renders the server's per-player view and sends actions. The server owns all rules.
 import { SVG } from '../brew-leap/js/sprites.js';
 import { mountNightSky } from '../shared/night-sky.js';
+import { isMuted, mountToggle, setMusicController, wireUiSounds, getSharedCtx } from '../shared/sfx.js';
+import { startNameMusic, stopNameMusic, setIntensity, setDuck, isNameMusicPlaying } from '../shared/namegame-music.js';
+import { syncTicks, stopTicks, configureTicks } from '../shared/timer-ticks.js';
+import { playCelebration } from '../shared/celebration.js';
+import { fireConfetti } from '../shared/confetti.js';
 import { api, session, lastName, normalizeCode, esc, nametag, avatar, timer, paintTimers, plural } from './ui.js';
 
 document.querySelectorAll('[data-icon="mug"]').forEach((el) => { el.innerHTML = SVG.mug; });
 mountNightSky(document.querySelector('.skyline'), { pillars: false });
+
+// Tick phases + duck target for shared/timer-ticks.js, specific to this room.
+configureTicks({ tickPhases: { describe: true, guess: true }, duck: setDuck });
+
+// Composite music controller: a light lobby/game-show theme during lobby/
+// results/final, crossfading to a quirky "thinking time" groove during the
+// live describe/guess phases (louder/brighter at intensity 1 during guess,
+// where everyone acts on the same description at once). Both themes share
+// shared/namegame-music.js's single engine. Routed to sfx.js via
+// setMusicController so mute/unmute/visibility/bfcache keep working.
+const LOBBY_PHASES = { lobby: true, results: true, final: true };
+const INGAME_PHASES = { describe: true, guess: true };
+let currentSource = 'lobby'; // 'lobby' | 'ingame'
+let currentIntensity = 0;
+let roomMuted = false;
+
+function startCurrent() {
+  if (roomMuted) return;
+  // Don't resume/start audio in a hidden tab (e.g. an SSE-driven phase change
+  // landing while backgrounded) - setPhase() above still records the current
+  // source/intensity so the visibilitychange handler starts the right one
+  // the moment the tab becomes visible again.
+  if (document.hidden) return;
+  const ctx = getSharedCtx();
+  startNameMusic(ctx, { theme: currentSource, intensity: currentIntensity });
+}
+
+const musicController = {
+  start() {
+    roomMuted = false;
+    startCurrent();
+  },
+  stop(opts) {
+    roomMuted = true;
+    stopNameMusic(opts);
+  },
+  isWaiting() {
+    return false;
+  },
+  setPhase(phase) {
+    const nextSource = LOBBY_PHASES[phase] ? 'lobby' : INGAME_PHASES[phase] ? 'ingame' : currentSource;
+    const nextIntensity = phase === 'guess' ? 1 : 0;
+    currentIntensity = nextIntensity;
+    if (nextSource === currentSource) {
+      setIntensity(nextIntensity);
+      return;
+    }
+    currentSource = nextSource;
+    startCurrent(); // startNameMusic() itself crossfades when the theme changes while playing
+  },
+};
+setMusicController(musicController);
+mountToggle(document.querySelector('.sound-toggle'));
+wireUiSounds(document); // covers the SSE-rerendered lobby/play buttons too
+
+// The synthesized score has no built-in pause-on-hidden behavior (unlike an
+// <audio> element), so it's paused/resumed here directly, mirroring impostor/play.js.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (isNameMusicPlaying()) stopNameMusic({ fast: true });
+  } else if (!roomMuted && !isMuted()) {
+    startCurrent();
+  }
+});
 
 const app = document.getElementById('app');
 const code = normalizeCode(new URLSearchParams(location.search).get('room'));
@@ -22,6 +91,9 @@ const S = {
   selected: null,
   names: '',
   namesDirty: false,
+  lastPhase: null, // previous v.phase, used to detect "a new game just started"
+  celebrated: false, // whether this tab has already fired the final-screen celebration+confetti for the current game
+  celebrateTimerId: null,
 };
 
 // ---------- chrome: room chip, status, toast ----------
@@ -171,11 +243,86 @@ function screenKey(v) {
   }
 }
 
+/** Whether THIS player has something to do right now (vs. just watching): drives
+ * whether they see the countdown ring/hear ticks, so idle players aren't confused
+ * by a timer for an action that isn't theirs. Everyone acts at once in both
+ * phases (no turn order), so this is just "have I submitted my part yet". */
+function hasOwnAction(v) {
+  switch (v.phase) {
+    case 'describe': return Boolean(v.describe?.participating && !v.describe.clue);
+    case 'guess': return Boolean(v.guess && !v.guess.isDescriber && !v.guess.yourGuess);
+    default: return false;
+  }
+}
+
+// Key for de-duping the final-screen celebration (fanfare + confetti): a
+// reload mid-final must not replay it, so the last-played state is remembered
+// both in memory (S.celebrated) and in sessionStorage (survives reloads,
+// scoped per room+tab same as session.js's auth storage). Cleared the moment a
+// new game is detected starting (back in the lobby, or round 1 of a fresh
+// describe phase arriving right after the previous game's final screen).
+const celebrateStorageKey = `namegame:celebrate:${code}`;
+
+function resetCelebrateDedup() {
+  S.celebrated = false;
+  if (S.celebrateTimerId) {
+    clearTimeout(S.celebrateTimerId);
+    S.celebrateTimerId = null;
+  }
+  try {
+    sessionStorage.removeItem(celebrateStorageKey);
+  } catch {
+    // ignore - in-memory guard already cleared
+  }
+}
+
+function maybeFireCelebration(v) {
+  if (v.phase !== 'final') {
+    if (S.celebrateTimerId) {
+      clearTimeout(S.celebrateTimerId);
+      S.celebrateTimerId = null;
+    }
+    return;
+  }
+  if (S.celebrated || S.celebrateTimerId) return;
+  let alreadyPlayed = false;
+  try {
+    alreadyPlayed = sessionStorage.getItem(celebrateStorageKey) === '1';
+  } catch {
+    // storage unavailable - fall back to the in-memory guard only
+  }
+  if (alreadyPlayed) {
+    S.celebrated = true;
+    return;
+  }
+  S.celebrateTimerId = setTimeout(() => {
+    S.celebrateTimerId = null;
+    S.celebrated = true;
+    try {
+      sessionStorage.setItem(celebrateStorageKey, '1');
+    } catch {
+      // ignore - in-memory guard still prevents a replay within this tab/session
+    }
+    if (!isMuted()) {
+      playCelebration(getSharedCtx());
+      const card = app.querySelector('.podium__step--1') || app.querySelector('.podium');
+      fireConfetti({ originRect: card?.getBoundingClientRect() ?? null });
+    }
+  }, 900);
+}
+
 function render() {
   const v = S.view;
   const key = screenKey(v);
   if (key !== S.key) {
     S.key = key;
+    // Detect "a new game just started" the same way impostor/play.js does, so
+    // the celebration dedup key can't collide with a prior game in this room.
+    const prevPhase = S.lastPhase;
+    S.lastPhase = v.phase;
+    const enteringNewGame = v.phase === 'lobby'
+      || (v.phase === 'describe' && v.round === 1 && (prevPhase === 'final' || prevPhase === null));
+    if (enteringNewGame) resetCelebrateDedup();
     if (v.phase === 'describe' && S.draftRound !== v.round) {
       S.draft = '';
       S.localPick = null;
@@ -183,12 +330,15 @@ function render() {
     }
     if (v.phase === 'guess') S.selected = null;
     if (v.phase === 'lobby') S.namesDirty = false;
+    if (v.phase === 'final') maybeFireCelebration(v);
     app.innerHTML = ({ lobby, describe, guess, results: resultsScreen, final: finalScreen })[v.phase](v);
     app.querySelector('[data-autofocus]')?.focus({ preventScroll: true });
   }
   if (v.phase === 'lobby' && !S.namesDirty) S.names = (v.employee.names ?? []).join('\n');
   patch(v);
   paintTimers(v.deadline, v.deadlineSecs, S.offset);
+  musicController.setPhase(v.phase);
+  syncTicks(v.phase, v.deadline, v.deadlineSecs, S.offset, hasOwnAction(v));
 }
 
 /** Live bits that change without replacing the screen (so typing and selections survive). */
@@ -255,7 +405,7 @@ function bar(v, small, title) {
 function rosterItem(v, p, meta = '', extra = '') {
   const you = p.id === v.you;
   return `<li class="${p.online ? '' : 'is-offline'} ${you ? 'is-you' : ''} ${extra}">
-    ${avatar(p)}<span class="roster__name">${esc(p.name)}${you ? ' (you)' : ''}</span>${meta}
+    ${avatar(p)}<span class="roster__name" title="${esc(p.name)}">${esc(p.name)}${you ? ' (you)' : ''}</span>${meta}
   </li>`;
 }
 
@@ -439,7 +589,7 @@ function ranked(v) {
 function leaderboard(v) {
   return ranked(v).map((p) => `<li class="${p.id === v.you ? 'is-you' : ''}">
       <span class="leader__rank">${p.rank}</span>${avatar(p)}
-      <span class="roster__name">${esc(p.name)}${p.id === v.you ? ' (you)' : ''}</span>
+      <span class="roster__name" title="${esc(p.name)}">${esc(p.name)}${p.id === v.you ? ' (you)' : ''}</span>
       <span class="roster__score">${p.score}</span>
     </li>`).join('');
 }
